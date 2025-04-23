@@ -47,7 +47,18 @@ namespace Toodet_Viblyy
 
         private void button1_Click(object sender, EventArgs e)
         {
-            Process.Start(path);
+            if (File.Exists(path))
+            {
+                Process.Start(new ProcessStartInfo()
+                {
+                    FileName = path,
+                    UseShellExecute = true
+                });
+            }
+            else
+            {
+                MessageBox.Show("Faili ei leitud: " + path, "Viga", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
     }
 }

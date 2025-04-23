@@ -39,8 +39,6 @@ namespace Toodet_Viblyy
 
             string connectionString = ConfigurationManager.ConnectionStrings["MyDbConnection"].ConnectionString;
             connect = new SqlConnection(connectionString);
-            mainPB.Image = Image.FromFile(@"..\..\pildid\ePood.png");
-            mainPB.SizeMode = PictureBoxSizeMode.Zoom;
 
             nimi = Nimi;
             isOmanik = IsOmanik;
@@ -68,11 +66,9 @@ namespace Toodet_Viblyy
 
         private void ApplyDarkTheme()
         {
-            // Form styling
             this.BackColor = Color.Black;
             this.ForeColor = Color.White;
 
-            // ListBox styling
             listBoxToodet.BackColor = Color.FromArgb(45, 45, 45);
             listBoxToodet.ForeColor = Color.White;
             listBoxToodet.BorderStyle = BorderStyle.FixedSingle;
@@ -81,7 +77,6 @@ namespace Toodet_Viblyy
             listBoxOstukorv.ForeColor = Color.White;
             listBoxOstukorv.BorderStyle = BorderStyle.FixedSingle;
 
-            // ComboBox styling
             Kat_box.BackColor = Color.FromArgb(70, 70, 70);
             Kat_box.ForeColor = Color.White;
             Kat_box.FlatStyle = FlatStyle.Flat;
@@ -90,29 +85,21 @@ namespace Toodet_Viblyy
             listBoonused.ForeColor = Color.White;
             listBoonused.FlatStyle = FlatStyle.Flat;
 
-            // PictureBox styling
-            mainPB.BackColor = Color.FromArgb(45, 45, 45);
-            mainPB.BorderStyle = BorderStyle.FixedSingle;
-            mainPB.SizeMode = PictureBoxSizeMode.Zoom;
-
             pictureBox_Toode.BackColor = Color.FromArgb(45, 45, 45);
             pictureBox_Toode.BorderStyle = BorderStyle.FixedSingle;
             pictureBox_Toode.SizeMode = PictureBoxSizeMode.Zoom;
 
-            // Buttons styling
             foreach (Control control in this.Controls)
             {
-                if (control is Button)
+                if (control is Button button)
                 {
-                    Button button = (Button)control;
                     button.BackColor = Color.FromArgb(70, 70, 70);
                     button.ForeColor = Color.White;
                     button.FlatStyle = FlatStyle.Flat;
                     button.FlatAppearance.BorderColor = Color.Gray;
                 }
-                else if (control is Label)
+                else if (control is Label label)
                 {
-                    Label label = (Label)control;
                     label.ForeColor = Color.White;
                 }
             }
@@ -131,8 +118,7 @@ namespace Toodet_Viblyy
 
                 while (reader.Read())
                 {
-                    int n;
-                    if (int.TryParse(reader["Hind"].ToString(), out n))
+                    if (int.TryParse(reader["Hind"].ToString(), out int n))
                     {
                         summa += n;
                     }
@@ -142,9 +128,8 @@ namespace Toodet_Viblyy
                 connect.Close();
             }
 
-            if (listBoonused.SelectedItem != null)
+            if (listBoonused.SelectedItem != null && int.TryParse(listBoonused.SelectedItem.ToString(), out int selectedBoonusPercent))
             {
-                int selectedBoonusPercent = (int)listBoonused.SelectedItem;
                 double bonusAmount = (double)summa * selectedBoonusPercent / 100;
                 summa -= (int)bonusAmount;
             }
@@ -169,6 +154,7 @@ namespace Toodet_Viblyy
             reader.Close();
             connect.Close();
 
+            Kat_box.Items.Clear();
             foreach (string item in katNimetusList)
             {
                 Kat_box.Items.Add(item);
@@ -178,9 +164,34 @@ namespace Toodet_Viblyy
         private void button1_Click(object sender, EventArgs e)
         {
             listBoxOstukorv.BeginUpdate();
-            foreach (object Item in listBoxToodet.SelectedItems)
+            foreach (object item in listBoxToodet.SelectedItems)
             {
-                listBoxOstukorv.Items.Add(Item);
+                string productName = item.ToString();
+
+                connect.Open();
+                SqlCommand command1 = new SqlCommand("SELECT Kogus FROM Toodetabel WHERE ToodeNimetus = @productName", connect);
+                command1.Parameters.AddWithValue("@productName", productName);
+                SqlDataReader reader = command1.ExecuteReader();
+                int availableQuantity = 0;
+
+                if (reader.Read())
+                {
+                    availableQuantity = (int)reader["Kogus"];
+                }
+
+                reader.Close();
+                connect.Close();
+
+                int currentQuantityInCart = listBoxOstukorv.Items.Cast<string>().Count(x => x == productName);
+
+                if (currentQuantityInCart < availableQuantity)
+                {
+                    listBoxOstukorv.Items.Add(item);
+                }
+                else
+                {
+                    MessageBox.Show($"Ei saa lisada rohkem kui {availableQuantity} '{productName}' toodet.");
+                }
             }
             listBoxOstukorv.EndUpdate();
         }
@@ -195,9 +206,9 @@ namespace Toodet_Viblyy
         {
             connect.Open();
             List<string> toodeNimetusList = new List<string>();
-
-            int id = Kat_box.SelectedIndex + 12;
-            SqlCommand command = new SqlCommand("SELECT ToodeNimetus,Kogus FROM Toodetabel where Kategooriat=" + id, connect);
+            int id = Kat_box.SelectedIndex + 12; // Magic number - maybe refactor later
+            SqlCommand command = new SqlCommand("SELECT ToodeNimetus,Kogus FROM Toodetabel WHERE Kategooriat = @id", connect);
+            command.Parameters.AddWithValue("@id", id);
 
             SqlDataReader reader = command.ExecuteReader();
 
@@ -215,7 +226,6 @@ namespace Toodet_Viblyy
             connect.Close();
 
             listBoxToodet.Items.Clear();
-
             foreach (string item in toodeNimetusList)
             {
                 listBoxToodet.Items.Add(item);
@@ -250,20 +260,20 @@ namespace Toodet_Viblyy
 
                 while (reader.Read())
                 {
-                    int n;
-                    if (int.TryParse(reader["Hind"].ToString(), out n))
+                    if (int.TryParse(reader["Hind"].ToString(), out int n))
                     {
                         labelHind.Text = n.ToString();
                         labelKogus2.Text = reader["Kogus"].ToString();
                     }
 
-                    if (reader["Pilt"].ToString() != "")
+                    string piltPath = reader["Pilt"].ToString();
+                    if (!string.IsNullOrEmpty(piltPath))
                     {
                         try
                         {
-                            pictureBox_Toode.Image = Image.FromFile(@"..\..\pildid\" + reader["Pilt"].ToString());
+                            pictureBox_Toode.Image = Image.FromFile(Path.Combine("..", "..", "pildid", piltPath));
                         }
-                        catch (Exception)
+                        catch
                         {
                             pictureBox_Toode.Image = null;
                         }
@@ -282,7 +292,6 @@ namespace Toodet_Viblyy
         public void NaitaBoonused(int kasutajaId)
         {
             connect.Open();
-
             SqlCommand command1 = new SqlCommand("SELECT boonus FROM kliendidTabel WHERE kasutajaId=@id", connect);
             command1.Parameters.AddWithValue("@id", kasutajaId);
             SqlDataReader reader = command1.ExecuteReader();
@@ -321,8 +330,7 @@ namespace Toodet_Viblyy
 
                 while (reader.Read())
                 {
-                    int hind;
-                    if (int.TryParse(reader["Hind"].ToString(), out hind))
+                    if (int.TryParse(reader["Hind"].ToString(), out int hind))
                     {
                         Hinnad.Add(hind);
                     }
@@ -338,6 +346,7 @@ namespace Toodet_Viblyy
             int.TryParse(lblSumma.Text, out Summa);
 
             Kvitung kvitung = new Kvitung(Toodet, Hinnad, Summa);
+            new Kvitung(Toodet, Hinnad, Summa);
 
             foreach (var item in listBoxOstukorv.Items)
             {

@@ -16,6 +16,7 @@ namespace Toodet_Viblyy
             hinnad = Hinnad;
             summa = 0; // Инициализация суммы
 
+            // Путь к папке "arved" относительно исполняемого файла
             string kaustatee = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\arved\");
             string failiNime = $"Check_{DateTime.Now:yyyyMMddHHmmss}.txt";
             string failiTee = Path.Combine(kaustatee, failiNime);
@@ -49,9 +50,9 @@ namespace Toodet_Viblyy
                 Console.WriteLine($"Произошла ошибка: {ex.Message}");
             }
 
-            Tsekk tsekk = new Tsekk("C:\\Users\\Administrator\\source\\repos\\online-shop-windowsform-app\\Toodet_Viblyy\\arved\\" + failiNime, failiNime);
+            // Используем точный путь, по которому был создан файл
+            Tsekk tsekk = new Tsekk(Path.GetFullPath(failiTee), failiNime);
             tsekk.ShowDialog();
         }
-
     }
 }

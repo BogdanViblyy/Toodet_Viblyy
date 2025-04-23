@@ -266,7 +266,7 @@ namespace Toodet_Viblyy
             catch (Exception)
             {
                 MessageBox.Show("Pilt puudub");
-                pictureBox_Toode.Image = Image.FromFile(@"..\..\pildid\ePood.png");
+                pictureBox_Toode.Image = Image.FromFile(@"..\..\pildid\ePood.jpg");
             }
             Kat_box.SelectedItem = dataGridView1.Rows[e.RowIndex].Cells[5].Value.ToString();
         }
@@ -301,7 +301,7 @@ namespace Toodet_Viblyy
                 }
             }
             dataGridView1.Columns.Add(combo_kat);
-            pictureBox_Toode.Image = Image.FromFile(Path.Combine(Path.GetFullPath(@"..\..\pildid"), "ePood.png"));
+            pictureBox_Toode.Image = Image.FromFile(Path.Combine(Path.GetFullPath(@"..\..\pildid"), "ePood.jpg"));
             pictureBox_Toode.SizeMode = PictureBoxSizeMode.Zoom;
             connect.Close();
         }
